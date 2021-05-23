@@ -397,3 +397,79 @@ dev-backup-archive:
 dev-commit:
 	git commit -a -m "save genesis fixtures to ${V}" | true
 	git push | true
+
+
+
+###################################################################################
+# LOCAL TESTNET A.K.A. SWARM
+
+LIBRA_PATH = ${HOME}/libra
+SWARM_DATA_PATH = ${HOME}/libra/swarm_temp
+SWARM_BIN  = ${HOME}/libra/target/debug
+
+#MNEM = $(shell cat ${LIBRA_PATH}/ol/fixtures/mnemonic/${NS}.mnem)
+
+MNEM0 = $(shell cat ${LIBRA_PATH}/ol/fixtures/mnemonic/alice.mnem)
+MNEM1 = $(shell cat ${LIBRA_PATH}/ol/fixtures/mnemonic/bob.mnem)
+MNEM2 = $(shell cat ${LIBRA_PATH}/ol/fixtures/mnemonic/carol.mnem)
+
+#NODE_ENV = test
+
+swarm-nodes-cli:
+	@echo Brining up a swarm with three nodes and a cli
+	MNEM='${MNEM0}' \
+	NODE_ENV="test" \
+	${SWARM_BIN}/libra-swarm --libra-node ${SWARM_BIN}/libra-node \
+	-c ${SWARM_DATA_PATH} -n 3 -s --cli-path ${SWARM_BIN}/cli
+
+swarm-cli:
+	@echo Brining up a cli for a swarm (assuming one is up and running)
+
+swarm-nodes:
+	@echo Brining up a swarm with 3 nodes: Alice, Bob and Carol
+	NODE_ENV="test" \
+        ${SWARM_BIN}/libra-swarm --libra-node ${SWARM_BIN}/libra-node \
+        -c ${SWARM_DATA_PATH} -n 3
+
+swarm-onboarding:
+	@echo Onboarding a new node into a swarm
+	NODE_ENV="test" \
+
+swarm-init-alice:
+	@echo Initializing node Alice
+	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=alice init
+	mkdir -p ./swarm_temp/0/blocks
+	cp ol/fixtures/blocks/test/alice/* ./swarm_temp/0/blocks/
+
+swarm-init-bob:
+	@echo Initializing node Bob
+	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=bob init
+	mkdir -p ./swarm_temp/1/blocks
+	cp ol/fixtures/blocks/test/bob/* ./swarm_temp/1/blocks/
+
+swarm-init-carol:
+	@echo Initializing node Carol
+	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=carol init
+	mkdir -p ./swarm_temp/2/blocks
+	cp ol/fixtures/blocks/test/carol/* ./swarm_temp/2/blocks/
+
+swarm-mine-alice: swarm-init-alice
+	@echo Bringing up a miner for node Alice
+	MNEM="${MNEM0}" \
+	NODE_ENV="test" \
+	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona alice start &> ./swarm_temp/logs/0-miner--output.txt &
+
+swarm-mine-bob: swarm-init-bob
+	@echo Bringing up a miner for node Bob
+	MNEM="${MNEM1}" \
+	NODE_ENV="test" \
+	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona bob start &> ./swarm_temp/logs/1-miner--output.txt &
+
+swarm-mine-carol: swarm-init-carol
+	@echo Bringing up a miner for node Carol
+	MNEM="${MNEM2}" \
+	NODE_ENV="test" \
+	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona carol start &> ./swarm_temp/logs/2-miner--output.txt &
+
+swarm-clean:
+	@echo Cleaning up by removing swarm_temp
