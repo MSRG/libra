@@ -178,7 +178,7 @@ reg:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
-	
+
 
 # Helpers to verify the local state.
 verify:
@@ -415,6 +415,9 @@ MNEM2 = $(shell cat ${LIBRA_PATH}/ol/fixtures/mnemonic/carol.mnem)
 
 #NODE_ENV = test
 
+swarm-build:
+	cargo build --all --bins --exclude cluster-test
+
 swarm-nodes-cli:
 	@echo Brining up a swarm with three nodes and a cli
 	MNEM='${MNEM0}' \
@@ -431,25 +434,25 @@ swarm-nodes:
         ${SWARM_BIN}/libra-swarm --libra-node ${SWARM_BIN}/libra-node \
         -c ${SWARM_DATA_PATH} -n 3
 
-swarm-onboarding:
-	@echo Onboarding a new node into a swarm
-	NODE_ENV="test" \
+#swarm-onboarding:
+#	@echo Onboarding a new node into a swarm
+#	NODE_ENV="test" \
 
 swarm-init-alice:
 	@echo Initializing node Alice
-	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=alice init
+	cargo r -p ol-cli -- --swarm-path=./swarm_temp --swarm-persona=alice init
 	mkdir -p ./swarm_temp/0/blocks
 	cp ol/fixtures/blocks/test/alice/* ./swarm_temp/0/blocks/
 
 swarm-init-bob:
 	@echo Initializing node Bob
-	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=bob init
+	cargo r -p ol-cli -- --swarm-path=./swarm_temp --swarm-persona=bob init
 	mkdir -p ./swarm_temp/1/blocks
 	cp ol/fixtures/blocks/test/bob/* ./swarm_temp/1/blocks/
 
 swarm-init-carol:
 	@echo Initializing node Carol
-	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=carol init
+	cargo r -p ol-cli -- --swarm-path=./swarm_temp --swarm-persona=carol init
 	mkdir -p ./swarm_temp/2/blocks
 	cp ol/fixtures/blocks/test/carol/* ./swarm_temp/2/blocks/
 
@@ -471,5 +474,5 @@ swarm-mine-carol: swarm-init-carol
 	NODE_ENV="test" \
 	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona carol start &> ./swarm_temp/logs/2-miner--output.txt &
 
-swarm-clean:
-	@echo Cleaning up by removing swarm_temp
+#swarm-clean:
+#	@echo Cleaning up by removing swarm_temp
