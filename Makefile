@@ -43,13 +43,13 @@ ifndef RELEASE
 RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
-BINS= db-backup db-backup-verify db-restore libra-node miner ol_cli txs stdlib
+BINS= db-backup db-backup-verify db-restore libra-node miner ol txs stdlib
 
 
 
 ##### DEPENDENCIES #####
 deps:
-	. ./util/setup.sh
+	. ./ol/util/setup.sh
 
 download: web-files
 	@for b in ${RELEASE} ; do \
@@ -60,8 +60,8 @@ download: web-files
 	done
 
 web-files: 
-	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor/public.zip https://github.com/OLSF/libra/releases/download/v4.3.0-rc.0/public.zip
-	unzip ${DATA_PATH}/web-monitor/public.zip
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.zip https://github.com/OLSF/libra/releases/latest/download/web-monitor.zip
+	unzip ${DATA_PATH}/web-monitor.zip -d ${DATA_PATH}/web-monitor
 
 download-release:
 	@for b in ${BINS} ; do \
@@ -81,7 +81,7 @@ bins:
 	cargo run -p stdlib --release
 
 # NOTE: stdlib is built for cli bindings
-	cargo build -p libra-node -p miner -p backup-cli -p ol-cli -p txs -p onboard --release
+	cargo build -p libra-node -p miner -p backup-cli -p ol -p txs -p onboard --release
 
 install:
 	sudo cp -f ${SOURCE}/target/release/miner /usr/local/bin/miner
@@ -89,7 +89,7 @@ install:
 	sudo cp -f ${SOURCE}/target/release/db-restore /usr/local/bin/db-restore
 	sudo cp -f ${SOURCE}/target/release/db-backup /usr/local/bin/db-backup
 	sudo cp -f ${SOURCE}/target/release/db-backup-verify /usr/local/bin/db-backup-verify
-	sudo cp -f ${SOURCE}/target/release/ol_cli /usr/local/bin/ol
+	sudo cp -f ${SOURCE}/target/release/ol /usr/local/bin/ol
 	sudo cp -f ${SOURCE}/target/release/txs /usr/local/bin/txs
 	sudo cp -f ${SOURCE}/target/release/onboard /usr/local/bin/onboard
 
@@ -368,7 +368,7 @@ dev-join: clear fix fix-genesis dev-wizard
 # mock restore backups from dev-epoch-archive
 	rm -rf ~/.0L/restore
 # restore from MOCK archive OLSF/dev-epoch-archive
-	cargo r -p ol-cli -- restore
+	cargo r -p ol -- restore
 # start a node with fullnode.node.yaml configs
 	make start-full
 
@@ -385,7 +385,7 @@ dev-register: clear fix register
 dev-genesis: genesis dev-save-genesis fix-genesis
 
 # Save the files to mock infrastructure i.e. devnet github
-dev-infra: dev-save-genesis dev-backup-archive dev-commit
+dev-infra: dev-backup-archive dev-commit
 
 dev-save-genesis: set-waypoint
 	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/
@@ -398,6 +398,10 @@ dev-commit:
 	git commit -a -m "save genesis fixtures to ${V}" | true
 	git push | true
 
+TAG=$(shell git tag -l "previous")
+clean-tags:
+	git push origin --delete ${TAG}
+	git tag -d ${TAG}
 
 ###################################################################################
 # LOCAL TESTNET A.K.A. SWARM
@@ -439,19 +443,19 @@ swarm-nodes:
 
 swarm-init-alice:
 	@echo Initializing node Alice
-	cargo r -p ol-cli -- --swarm-path=./swarm_temp --swarm-persona=alice init
+	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=alice init
 	mkdir -p ./swarm_temp/0/blocks
 	cp ol/fixtures/blocks/test/alice/* ./swarm_temp/0/blocks/
 
 swarm-init-bob:
 	@echo Initializing node Bob
-	cargo r -p ol-cli -- --swarm-path=./swarm_temp --swarm-persona=bob init
+	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=bob init
 	mkdir -p ./swarm_temp/1/blocks
 	cp ol/fixtures/blocks/test/bob/* ./swarm_temp/1/blocks/
 
 swarm-init-carol:
 	@echo Initializing node Carol
-	cargo r -p ol-cli -- --swarm-path=./swarm_temp --swarm-persona=carol init
+	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=carol init
 	mkdir -p ./swarm_temp/2/blocks
 	cp ol/fixtures/blocks/test/carol/* ./swarm_temp/2/blocks/
 
@@ -475,3 +479,6 @@ swarm-mine-carol: swarm-init-carol
 
 #swarm-clean:
 #	@echo Cleaning up by removing swarm_temp
+
+
+
