@@ -194,6 +194,7 @@ default-members = [
 ]
 
 [profile.bench]
+opt-level = 0
 debug = true
 
 # //////// 0L ////////

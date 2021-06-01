@@ -178,7 +178,6 @@ reg:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
-	
 
 # Helpers to verify the local state.
 verify:
@@ -437,6 +436,14 @@ swarm-nodes:
         ${SWARM_BIN}/libra-swarm --libra-node ${SWARM_BIN}/libra-node \
         -c ${SWARM_DATA_PATH} -n 3
 
+#swarm-debug: swarm-nodes-alice-bob swarm-mine-alice
+
+swarm-debug:
+	@echo Brining up a swarm with 3 nodes: Alice, Bob and Carol
+	NODE_ENV="test" \
+        ${SWARM_BIN}/libra-swarm --libra-node ${SWARM_BIN}/libra-node \
+        -c ${SWARM_DATA_PATH} -n 2
+
 #swarm-onboarding:
 #	@echo Onboarding a new node into a swarm
 #	NODE_ENV="test" \
@@ -459,17 +466,25 @@ swarm-init-carol:
 	mkdir -p ./swarm_temp/2/blocks
 	cp ol/fixtures/blocks/test/carol/* ./swarm_temp/2/blocks/
 
-swarm-mine-alice: swarm-init-alice
+swarm-mine-alice: swarm-init-alice swarm-init-bob
 	@echo Bringing up a miner for node Alice
 	MNEM="${MNEM0}" \
 	NODE_ENV="test" \
-	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona alice start &> ./swarm_temp/logs/0-miner--output.txt &
+	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona alice start
+#	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona alice start &> ./swarm_temp/logs/0-miner--output.txt &
 
 swarm-mine-bob: swarm-init-bob
 	@echo Bringing up a miner for node Bob
 	MNEM="${MNEM1}" \
 	NODE_ENV="test" \
 	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona bob start &> ./swarm_temp/logs/1-miner--output.txt &
+
+swarm-debug-mine-bob: swarm-init-bob
+	@echo Bringing up a miner for node Bob
+	MNEM="${MNEM1}" \
+	NODE_ENV="test" \
+	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona bob start
+
 
 swarm-mine-carol: swarm-init-carol
 	@echo Bringing up a miner for node Carol
@@ -480,5 +495,13 @@ swarm-mine-carol: swarm-init-carol
 #swarm-clean:
 #	@echo Cleaning up by removing swarm_temp
 
+# Not working yet
 
+swarm-explorer-alice:
+	cargo run -p ol -- --swarm-path=~/swarm_temp --swarm-persona=alice explorer
 
+swarm-tx-alice-demo:
+	cargo r -p txs -- --swarm-path=~/swarm_temp/ --swarm-persona=alice demo
+
+swarm-tx-onboard-eve:
+	cargo r -p txs -- --swarm-path=~/swarm_temp/ --swarm-persona=alice create-validator -f ./ol/fixtures/onboarding/eve_init_test.json

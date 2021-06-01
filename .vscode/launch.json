@@ -27,6 +27,30 @@
 																																			              "NODE_ENV": "test"
 																																				                  }, // e.g. {"ENV1": "aa", "ENV2: "bb"}
             "cwd": "${workspaceFolder}"
+    },
+	 {
+			            "type": "lldb",
+				                "request": "launch",
+						            "name": "debug miner bob",
+							                "cargo": {
+									              "args": [
+										                      "b",
+												                      "-p",
+														                      "miner"
+																                    ],
+																		                },
+																				            "args": [
+																					                  "--swarm-path",
+																							                "./swarm_temp",
+																									              "--swarm-persona",
+																										                    "bob",
+																												                  "start"
+																														              ], // e.g. ["arg1", "arg2"]
+																															                  "env": {
+																																	                "MNEM": "ring pumpkin cake build jungle cloth bronze aerobic mechanic baby love melt below sight cotton trophy inquiry sugar exhibit sure first match ten clarify",
+																																			              "NODE_ENV": "test"
+																																				                  }, // e.g. {"ENV1": "aa", "ENV2: "bb"}
+            "cwd": "${workspaceFolder}"
     }
     ]
 }
