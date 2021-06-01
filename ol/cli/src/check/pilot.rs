@@ -8,14 +8,12 @@ use crate::{
 };
 use std::{thread, time::Duration};
 
-/// check the db
+/// check if we need to restore the db
 pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
-    let cfg = node.conf.to_owned();
-    // let wp = node.client.waypoint().unwrap().to_owned();
+    let cfg = node.app_conf.to_owned();
     // Abort if the database is not set correctly.
     node.vitals.host_state.onboard_state = OnboardState::EmptyBox;
 
-    // TODO: db.vitals.db_restored
     if node.db_files_exist() {
         node.vitals.host_state.onboard_state = OnboardState::DbFilesOk;
 
@@ -71,7 +69,6 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
         node.vitals.host_state.monitor_state = MonitorState::Serving;
     }
 
-
     let is_in_val_set = node.vitals.items.validator_set;
     match is_in_val_set {
         true => {
@@ -81,21 +78,20 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
             }
         }
         false => {
-            // TODO: we don't know if the account exists from the is_in_validator_set check
-            node.vitals.host_state.account_state = AccountState::None;
             if verbose {
                 println!("Node: account is NOT in validator set");
-                  if node.vitals.items.account_created {
-                    println!(".. A
-                    ccount: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
-      
+            }
+            node.vitals.host_state.account_state = AccountState::ExistsOnChain;
+            if !node.vitals.items.account_created {
+                node.vitals.host_state.account_state = AccountState::None;
+              if verbose {
+                  println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
               }
             }
         }
     }
 
     // is node started?
-    // TODO: vitals.node_running
     if node.vitals.items.node_running {
         if verbose {
             println!("Node: node is running");
@@ -118,7 +114,7 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
             },
             Err(_) => {
                 if verbose {
-                    println!("Node: WARN: could not start node in: {:?}", &start_mode);
+                    println!(".. Node: WARN: could not start node in: {:?}", &start_mode);
                 }
                 NodeState::Stopped
             }
