@@ -458,7 +458,7 @@ swarm-init-bob:
 	@echo Initializing node Bob
 	cargo r -p ol -- --swarm-path=./swarm_temp --swarm-persona=bob init
 	mkdir -p ./swarm_temp/1/blocks
-	cp ol/fixtures/blocks/test/bob/* ./swarm_temp/1/blocks/
+	cp -f ol/fixtures/blocks/test/bob/* ./swarm_temp/1/blocks/
 
 swarm-init-carol:
 	@echo Initializing node Carol
@@ -466,7 +466,7 @@ swarm-init-carol:
 	mkdir -p ./swarm_temp/2/blocks
 	cp ol/fixtures/blocks/test/carol/* ./swarm_temp/2/blocks/
 
-swarm-mine-alice: swarm-init-alice swarm-init-bob
+swarm-mine-alice: swarm-init-alice
 	@echo Bringing up a miner for node Alice
 	MNEM="${MNEM0}" \
 	NODE_ENV="test" \
@@ -477,7 +477,8 @@ swarm-mine-bob: swarm-init-bob
 	@echo Bringing up a miner for node Bob
 	MNEM="${MNEM1}" \
 	NODE_ENV="test" \
-	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona bob start &> ./swarm_temp/logs/1-miner--output.txt &
+	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona bob start
+#	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona bob start &> ./swarm_temp/logs/1-miner--output.txt &
 
 swarm-debug-mine-bob: swarm-init-bob
 	@echo Bringing up a miner for node Bob
@@ -492,8 +493,9 @@ swarm-mine-carol: swarm-init-carol
 	NODE_ENV="test" \
 	cargo r -p miner -- --swarm-path ./swarm_temp --swarm-persona carol start &> ./swarm_temp/logs/2-miner--output.txt &
 
-#swarm-clean:
-#	@echo Cleaning up by removing swarm_temp
+swarm-clean:
+	@echo Cleaning up by removing swarm_temp
+	rm -rf ./swarm_temp
 
 # Not working yet
 
